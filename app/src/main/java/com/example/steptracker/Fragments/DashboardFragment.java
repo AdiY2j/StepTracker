@@ -38,7 +38,7 @@ public class DashboardFragment extends Fragment implements SensorEventListener{
     private static final String TAG = "DashboardFragment";
     private View view;
     private SensorManager sensorManager;
-    private Sensor sensor1, sensor2;
+    private Sensor sensor1;
     private int flag = 0;
     private long initialValue = 0, steps = 0, calories = 0, dbSteps = 0, dbCalories = 0;
     private float distance = 0f, dbDistance = 0f;
@@ -116,6 +116,9 @@ public class DashboardFragment extends Fragment implements SensorEventListener{
         cv.put(WorkoutEntry.COLUMN_STEPS, 0);
 
         mDatabase.insert(WorkoutEntry.TABLE_NAME, null, cv);
+        dbSteps = 0;
+        dbCalories = 0;
+        dbDistance = 0;
     }
 
     private boolean queryDBForDate() {
@@ -138,9 +141,7 @@ public class DashboardFragment extends Fragment implements SensorEventListener{
 
             tvStepsData.setText(String.valueOf(dbSteps));
             tvTotalStepsData.setText(String.valueOf(dbSteps));
-            if(dbDistance >= 0.01) {
-                tvDistanceData.setText(String.format("%.2f", dbDistance));
-            }
+            tvDistanceData.setText(String.format("%.2f", dbDistance));
             tvCaloriesData.setText(String.valueOf(dbCalories));
             return true;
         }
@@ -155,7 +156,6 @@ public class DashboardFragment extends Fragment implements SensorEventListener{
     private void setupCounterService() {
         sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         sensor1 = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
-        sensor2 = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
         if(sensor1 != null){
             sensorManager.registerListener(this, sensor1, SensorManager.SENSOR_DELAY_FASTEST);
         } else {
@@ -163,12 +163,6 @@ public class DashboardFragment extends Fragment implements SensorEventListener{
             new Handler().postDelayed(() -> getActivity().finish(), 3000);
         }
 
-
-        if(sensor2 != null){
-            sensorManager.registerListener(this, sensor2, SensorManager.SENSOR_DELAY_FASTEST);
-        }else{
-            Toast.makeText(getContext(), "Device doesn't support Floor Calculation", Toast.LENGTH_SHORT).show();
-        }
     }
 
 
@@ -213,6 +207,7 @@ public class DashboardFragment extends Fragment implements SensorEventListener{
             initialValue = (long) sensorEvent.values[0] - dbSteps;
         }
         steps = (long) (sensorEvent.values[0] - initialValue);
+
         if(steps >= 0) {
             tvStepsData.setText(String.valueOf(steps));
             tvTotalStepsData.setText(String.valueOf(steps));
@@ -222,9 +217,7 @@ public class DashboardFragment extends Fragment implements SensorEventListener{
     private void calculateDistance() {
         float strideLength = (float) (height * 0.0003048 * .414);
         distance = (steps * strideLength);
-        if(distance >= 0.01) {
-            tvDistanceData.setText(String.format("%.2f", distance));
-        }
+        tvDistanceData.setText(String.format("%.2f", distance));
     }
 
     private void updateDatabase() {
